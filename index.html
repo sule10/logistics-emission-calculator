@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logistics Emission Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Apply Inter font globally */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom style for better focus visibility */
+        input:focus, select:focus {
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            box-shadow: 0 0 0 2px rgb(59 130 246); /* Tailwind blue-500 */
+            border-color: rgb(59 130 246);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="bg-white p-6 md:p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">Logistics Emission Calculator</h1>
+
+        <form id="calculator-form" class="space-y-4">
+            <div>
+                <label for="transport-mode" class="block text-sm font-medium text-gray-700 mb-1">Select Mode of Transport:</label>
+                <select id="transport-mode" name="transport-mode" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <option value="truck">Truck (Road)</option>
+                    <option value="train">Train (Rail)</option>
+                    <option value="ship">Ship (Sea)</option>
+                    <option value="plane">Plane (Air)</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="cargo-weight" class="block text-sm font-medium text-gray-700 mb-1">Enter Cargo Weight (in tonnes):</label>
+                <input type="number" id="cargo-weight" name="cargo-weight" placeholder="e.g., 10" min="0" step="any" required class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <div>
+                <label for="distance" class="block text-sm font-medium text-gray-700 mb-1">Enter Distance (in km):</label>
+                <input type="number" id="distance" name="distance" placeholder="e.g., 500" min="0" step="any" required class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <button type="button" id="calculate-button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md shadow-md transition duration-150 ease-in-out">
+                Calculate Emissions
+            </button>
+        </form>
+
+        <div id="results-section" class="mt-6 p-4 bg-gray-50 rounded-md border border-gray-200 hidden">
+             <h2 class="text-lg font-semibold mb-2 text-gray-700">Results:</h2>
+             <p id="error-message" class="text-red-600 mb-2 hidden"></p>
+             <p class="text-gray-800">Estimated Emissions: <span id="estimated-emissions" class="font-bold">--</span> kg CO₂e</p>
+             <p class="text-gray-800">Trees Needed to Offset*: <span id="trees-needed" class="font-bold">--</span></p>
+             <p class="text-xs text-gray-500 mt-2">*Based on an average mature tree absorbing ~21 kg CO₂e per year. This is a simplified estimate.</p>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Elements ---
+        const transportModeSelect = document.getElementById('transport-mode');
+        const cargoWeightInput = document.getElementById('cargo-weight');
+        const distanceInput = document.getElementById('distance');
+        const calculateButton = document.getElementById('calculate-button');
+        const resultsSection = document.getElementById('results-section');
+        const estimatedEmissionsSpan = document.getElementById('estimated-emissions');
+        const treesNeededSpan = document.getElementById('trees-needed');
+        const errorMessageP = document.getElementById('error-message');
+
+        // --- Emission Factors (kg CO₂e per tonne-km) ---
+        // These are approximate values and can vary significantly.
+        const emissionFactors = {
+            truck: 0.1,   // Road freight
+            train: 0.02,  // Rail freight
+            ship:  0.015, // Sea freight
+            plane: 0.6    // Air freight (highly variable)
+        };
+
+        // --- Tree Offset Factor (kg CO₂e per tree per year) ---
+        const treeOffsetFactor = 21;
+
+        // --- Event Listener ---
+        calculateButton.addEventListener('click', () => {
+            // Hide previous errors and results
+            errorMessageP.classList.add('hidden');
+            errorMessageP.textContent = '';
+            resultsSection.classList.add('hidden');
+            estimatedEmissionsSpan.textContent = '--';
+            treesNeededSpan.textContent = '--';
+
+
+            // --- Get Inputs ---
+            const transportMode = transportModeSelect.value;
+            const weight = parseFloat(cargoWeightInput.value);
+            const distance = parseFloat(distanceInput.value);
+
+            // --- Input Validation ---
+            if (isNaN(weight) || weight < 0 || isNaN(distance) || distance < 0) {
+                errorMessageP.textContent = 'Please enter valid positive numbers for weight and distance.';
+                errorMessageP.classList.remove('hidden');
+                resultsSection.classList.remove('hidden'); // Show section to display error
+                return; // Stop calculation
+            }
+
+             if (!transportMode || !emissionFactors[transportMode]) {
+                errorMessageP.textContent = 'Please select a valid transport mode.';
+                errorMessageP.classList.remove('hidden');
+                resultsSection.classList.remove('hidden');
+                return;
+            }
+
+
+            // --- Calculation ---
+            const emissionFactor = emissionFactors[transportMode];
+            const totalEmissions = weight * distance * emissionFactor;
+            const treesNeeded = Math.ceil(totalEmissions / treeOffsetFactor); // Round up to nearest whole tree
+
+            // --- Display Results ---
+            estimatedEmissionsSpan.textContent = totalEmissions.toFixed(2); // Format to 2 decimal places
+            treesNeededSpan.textContent = treesNeeded;
+            resultsSection.classList.remove('hidden'); // Show the results section
+        });
+
+    </script>
+
+</body>
+</html>
